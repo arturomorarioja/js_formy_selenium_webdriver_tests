@@ -42,5 +42,5 @@ Form submitted
 Selenium WebDriver / NodeJS / JavaScript / HTML5
 
 ## Author:
-Arturo Mora-Rioja
+Arturo Mora-Rioja  
 Based on the LinkedIn Learning course [*Selenium Essential Training*](https://www.linkedin.com/learning/selenium-essential-training) ([Meaghan Lewis](http://meaghanlewis.com/), 2020)
