@@ -26,7 +26,7 @@ async function testForm() {
     const lastName = 'Mora-Rioja';
     const jobTitle = 'Associate Professor';
     const educationLevel = 'Grad School';
-    const currentDate = '01/02/2022';
+    const currentDate = '01/02/2024';
     await form.send(firstName, lastName, jobTitle, educationLevel, currentDate);
 
     const confirmation = new PageConfirmation(driver, By, until);

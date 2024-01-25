@@ -146,8 +146,8 @@ async function testDropdownNoID() {
 async function testForm() {
     const firstName = 'Arturo';
     const lastName = 'Mora-Rioja';
-    const jobTitle = 'Assistant Professor';
-    const currentDate = '01/02/2022';
+    const jobTitle = 'Associate Professor';
+    const currentDate = '01/02/2024';
 
     const cssDivSuccess = 'div.alert.alert-success';
     const textDivSuccess = 'The form was successfully submitted!';

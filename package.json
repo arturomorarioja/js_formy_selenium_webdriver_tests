@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "geckodriver": "^4.3.0",
+    "selenium-webdriver": "^4.17.0"
+  }
+}
