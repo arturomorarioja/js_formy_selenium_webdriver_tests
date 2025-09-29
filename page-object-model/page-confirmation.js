@@ -2,7 +2,7 @@
  * Code samples based on the LinkedIn Learning course 
  * "Selenium Essential Training" (Meaghan Lewis, 2020)
  * 
- * @author  Arturo Mora-Rioja (amri@kea.dk)
+ * @author  Arturo Mora-Rioja
  * @version 1.0 December 2021
  */
 
