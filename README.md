@@ -26,7 +26,9 @@ The [Page Object Model](https://www.selenium.dev/documentation/test_practices/en
 
 ## Instructions
 - Formy tests
-1. Open a console and run `node test-formy.js`
+1. Open a console and run
+    - For visual tests: `node test-formy.js`
+    - For headless tests: `node test-formy.js --headless`
 2. Expected output:
 ```
 Form submitted

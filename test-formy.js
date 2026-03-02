@@ -4,23 +4,48 @@
  * 
  * @author  Arturo Mora-Rioja
  * @version 1.0.0 December 2021
- * @version 1.1.0 January 2023 testDropdownNoID() added
+ * @version 1.1.0 January 2023   testDropdownNoID() added
  * @version 1.1.1 September 2025 KEA replaced by EK in test data
+ * @version 1.2.0 March 2026     Headless mode enabled
+ *                               Heavy refactoring, including reinforcement of asynchronicity
  */
 
 const formy = 'https://formy-project.herokuapp.com/';
 const {By, Key, Builder, until} = require('selenium-webdriver');
-require('geckodriver');
+const firefox = require('selenium-webdriver/firefox');
+
+try {
+    require('geckodriver');
+} catch (err) {
+    /* GeckoDriver can be resolved by Selenium Manager in Selenium 4+.
+       This optional require is kept for setups that still rely on it. */
+}
+
+function createFirefoxDriver() {
+    const options = new firefox.Options();
+
+    if (process.argv.includes('--headless')) {
+        options.addArguments('-headless');
+        options.addArguments('--width=1920');
+        options.addArguments('--height=1080');
+    }
+
+    return new Builder()
+        .forBrowser('firefox')
+        .setFirefoxOptions(options)
+        .build();
+}
 
 async function testKeypress() {
     const text = 'EK Development';
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     
     try {
         await driver.get(formy + 'keypress');
         
-        await driver.findElement(By.id('name')).sendKeys(text, Key.RETURN);
-        await driver.findElement(By.id('name')).click();
+        const txtName = await driver.findElement(By.id('name'));
+        await txtName.sendKeys(text, Key.RETURN);
+        await txtName.click();
     } finally {       
         await driver.quit();
     }
@@ -30,9 +55,9 @@ async function testKeypress() {
 async function testScroll() {
     const text = 'EK Development';
     const date = '15/07/2022';
+    const driver = await createFirefoxDriver();
     
     // Selector
-    const driver = await new Builder().forBrowser('firefox').build();
     try {
         const txtName = driver.findElement(By.id('name'));
         const txtDate = driver.findElement(By.id('date'));
@@ -49,11 +74,11 @@ async function testScroll() {
 }
 
 async function testWindow() {
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     try {
-        const btnNewTab = driver.findElement(By.id('new-tab-button'));
-        
         await driver.get(formy + 'switch-window');    
+        
+        const btnNewTab = driver.findElement(By.id('new-tab-button'));
         const hdlMainWindow = driver.getWindowHandle();
         
         // Open new tab
@@ -61,11 +86,12 @@ async function testWindow() {
         
         // Switch to new tab
         const windowTabs = await driver.getAllWindowHandles();
-        windowTabs.forEach(async function(hdlCurrentwindow) {
+        for (const hdlCurrentwindow of windowTabs) {
             if (hdlCurrentwindow !== hdlMainWindow) {
                 await driver.switchTo().window(hdlCurrentwindow);
+                break;
             }
-        })
+        }
         
         // Switch back to original tab
         await driver.switchTo().window(hdlMainWindow);    
@@ -75,28 +101,28 @@ async function testWindow() {
 }
 
 async function testAlert() {
-    const driver = await new Builder().forBrowser('firefox').build();
-    try {
-        const btnAlert = driver.findElement(By.id('alert-button'));
-        
+    const driver = await createFirefoxDriver();
+    try {        
         await driver.get(formy + 'switch-window');
         
-        await btnAlert.click();                     // Show an alert
-        const alert = driver.switchTo().alert();    // Capture the alert
-        await alert.accept();                       // Accept the alert
+        const btnAlert = await driver.findElement(By.id('alert-button'));
+        await btnAlert.click();                         // Show an alert
+
+        const alert = await driver.switchTo().alert();  // Capture the alert
+        await alert.accept();                           // Accept the alert
     } finally {       
         await driver.quit();
     }
 }
 
 async function testDragAndDrop() {
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     try {
-        const imgSelenium = driver.findElement(By.id('image'));
-        const divBox = driver.findElement(By.id('box'));
-        
         await driver.get(formy + 'dragdrop');
-        
+
+        const imgSelenium = await driver.findElement(By.id('image'));
+        const divBox = await driver.findElement(By.id('box'));
+                
         const actions = driver.actions({async: true});
         await actions.dragAndDrop(imgSelenium, divBox).perform();
     } finally {        
@@ -105,12 +131,12 @@ async function testDragAndDrop() {
 }
 
 async function testDatePicker() {
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     try {
-        const datPicker = driver.findElement(By.id('datepicker'));
-        
         await driver.get(formy + 'datepicker');
         
+        const datPicker = await driver.findElement(By.id('datepicker'));
+                
         // The datepicker must be closed after selecting the date,
         // hence the need to send the Return key
         await datPicker.sendKeys('03/03/2021');
@@ -121,14 +147,14 @@ async function testDatePicker() {
 }
 
 async function testDropdown() {
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     try {
-        const dropdownButton = driver.findElement(By.id('dropdownMenuButton'));
-        const autocompleteOption = driver.findElement(By.id('autocomplete'));
-        
         await driver.get(formy + 'dropdown');
-        
+
+        const dropdownButton = await driver.findElement(By.id('dropdownMenuButton'));
         await dropdownButton.click();
+        
+        const autocompleteOption = await driver.findElement(By.id('autocomplete'));              
         await autocompleteOption.click();
     } finally {        
         await driver.quit();
@@ -136,20 +162,20 @@ async function testDropdown() {
 }
 
 async function testDropdownNoID() {
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     try {
-        const dropdownButton = driver.findElement(By.id('dropdownMenuButton'));
+        await driver.get(formy + 'dropdown');
+
+        const dropdownButton = await driver.findElement(By.id('dropdownMenuButton'));
+        await dropdownButton.click();
+
         const dropdownOptionsCSS = 'a.dropdown-item';
         const fileUploadOptionText = 'File Upload';
-        
-        await driver.get(formy + 'dropdown');
-        
-        await dropdownButton.click();
+                
         const dropdownOptions = await driver.findElements(By.css(dropdownOptionsCSS));
         
-        let optionText;
         for (const option of dropdownOptions) {
-            optionText = await option.getText();
+            const optionText = await option.getText();
             if (optionText === fileUploadOptionText) {
                 await option.click();
                 break;
@@ -164,26 +190,26 @@ async function testForm() {
     const firstName = 'Arturo';
     const lastName = 'Mora-Rioja';
     const jobTitle = 'Associate Professor';
-    const currentDate = '30/09/2025';
+    const currentDate = '2/3/2026';
 
     const cssDivSuccess = 'div.alert.alert-success';
     const textDivSuccess = 'The form was successfully submitted!';
     
     // Selector
-    const driver = await new Builder().forBrowser('firefox').build();
+    const driver = await createFirefoxDriver();
     try {
-        const txtFirstName = driver.findElement(By.id('first-name'));
-        const txtLastName = driver.findElement(By.id('last-name'));
-        const txtJobTitle = driver.findElement(By.id('job-title'));
-        const radGradSchool = driver.findElement(By.id('radio-button-3'));
-        const chkMale = driver.findElement(By.id('checkbox-1'));
-        const cmbExperience10 = driver.findElement(By.css('#select-menu > option[value="4"]'));
-        const datPicker = driver.findElement(By.id('datepicker'));
-        const btnSubmit = driver.findElement(By.css('a.btn.btn-lg.btn-primary'));
-        
-        // Methods
         await driver.get(formy + 'form');
+
+        const txtFirstName = await driver.findElement(By.id('first-name'));
+        const txtLastName = await driver.findElement(By.id('last-name'));
+        const txtJobTitle = await driver.findElement(By.id('job-title'));
+        const radGradSchool = await driver.findElement(By.id('radio-button-3'));
+        const chkMale = await driver.findElement(By.id('checkbox-1'));
+        const cmbExperience10 = await driver.findElement(By.css('#select-menu > option[value="4"]'));
+        const datPicker = await driver.findElement(By.id('datepicker'));
+        const btnSubmit = await driver.findElement(By.css('a.btn.btn-lg.btn-primary'));
         
+        // Methods        
         await txtFirstName.sendKeys(firstName);
         await txtLastName.sendKeys(lastName);
         await txtJobTitle.sendKeys(jobTitle);
@@ -195,25 +221,34 @@ async function testForm() {
         // Form submission
         await btnSubmit.click();
         
-        await driver.wait(until.elementLocated(By.css(cssDivSuccess)), 2000);
+        await driver.wait(until.elementLocated(By.css(cssDivSuccess)), 5000);
         const divSuccess = await driver.findElement(By.css(cssDivSuccess));
+        
         // Assert simulation
-        if (await divSuccess.getText() === textDivSuccess) {
+        const actualText = await divSuccess.getText();
+        if (actualText === textDivSuccess) {
             console.log('Form submitted');
         } else {
-            console.log(`Error when submitting form. [${divSuccess.text}] is different than [${textDivSuccess}]`);
+            console.log(`Error when submitting form. [${actualText}] is different than [${textDivSuccess}]`);
         }
     } finally {
         await driver.quit();
     }
 }
 
-testKeypress();
-testScroll();
-testWindow();
-testAlert();
-testDragAndDrop();
-testDatePicker();
-testDropdown();
-testDropdownNoID();
-testForm();
+async function main() {
+    await testKeypress();
+    await testScroll();
+    await testWindow();
+    await testAlert();
+    await testDragAndDrop();
+    await testDatePicker();
+    await testDropdown();
+    await testDropdownNoID();
+    await testForm();
+}
+
+main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+});
